@@ -1,4 +1,4 @@
-str = "qwe*ewq"
+﻿str = "qwe*ewq"
 stack = {}
 
 
