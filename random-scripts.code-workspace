@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "ComputerCraft",
+			"path": "./Lua-ComputerCraft/"
+		},
+		{
+			"name": "Lua",
+			"path": "./Lua/"
+		},
+		{
+			"name": "PowerShell",
+			"path": "./PowerShell/"
+		},
+		{
+			"name": "SQL",
+			"path": "./MS-SQL/"
+		}
+	],
+	"settings": {}
+}
