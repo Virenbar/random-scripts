@@ -1,4 +1,6 @@
-local R = 1
+local U = require "monitor"
+--
+local delay = 1
 local w1 = 6
 local w2 = 10
 --
@@ -7,46 +9,35 @@ local output = 'left'
 local cube = peripheral.find("inductionPort")
 local monitors = { peripheral.find("monitor") }
 --
-local mon = {}
+local T = U.create(monitors)
 local percent = 0
 local energy = 0
 local change = 0
 local maxEnergy = toFE(cube.getMaxEnergy())
 --
-function reset()
-  mon.clear()
-  mon.setCursorPos(1, 1)
-  mon.setTextColor(colors.white)
-end
 
-function newline()
-  local x, y = mon.getCursorPos()
-  mon.setCursorPos(1, y + 1)
-  mon.setTextColor(colors.white)
-end
-
-function rpad1(s)
+local function rpad1(s)
   s = tostring(s)
   local pad = w1 - #s
   return string.rep(" ", pad) .. s
 end
 
-function rpad2(s)
+local function rpad2(s)
   s = tostring(s)
   local pad = w2 - #s
   return string.rep(" ", pad) .. s
 end
 
-function round(num, idp)
+local function round(num, idp)
   local mult = 10 ^ (idp or 0)
   return math.floor(num * mult + 0.5) / mult
 end
 
-function ternary(condition, T, F)
+local function ternary(condition, T, F)
   if condition then return T else return F end
 end
 
-function formatEnergy(n)
+local function formatEnergy(n)
   --local placeValue = ("%%.%df"):format(places or 0)
   if not n then
     return 0
@@ -63,33 +54,33 @@ function formatEnergy(n)
   end
 end
 
---Modifyed print
-function printnocolor(name, value, unit)
-  mon.write(rpad1(name) .. ": " .. rpad2(tostring(round(value, 3))) .. " " .. unit)
+-- Modifyed print
+local function printnocolor(name, value, unit)
+  T.write(rpad1(name) .. ": " .. rpad2(tostring(round(value, 3))) .. " " .. unit)
   newline()
 end
 
-function printcolor(name, value, maxvalue, unit)
-  mon.write(rpad1(name) .. ": ")
+local function printcolor(name, value, maxvalue, unit)
+  T.write(rpad1(name) .. ": ")
   local percent = math.floor(value / math.abs(maxvalue) * 100)
   if maxvalue > 0 then
     if percent > 66 then
-      mon.setTextColor(colors.green)
+      T.setTextColor(colors.green)
     elseif percent < 34 then
-      mon.setTextColor(colors.red)
+      T.setTextColor(colors.red)
     else
-      mon.setTextColor(colors.yellow)
+      T.setTextColor(colors.yellow)
     end
   else
     if percent > 66 then
-      mon.setTextColor(colors.red)
+      T.setTextColor(colors.red)
     elseif percent < 34 then
-      mon.setTextColor(colors.green)
+      T.setTextColor(colors.green)
     else
-      mon.setTextColor(colors.yellow)
+      T.setTextColor(colors.yellow)
     end
   end
-  mon.write(rpad2(tostring(round(value, 3))) .. " " .. unit)
+  T.write(rpad2(tostring(round(value, 3))) .. " " .. unit)
   newline()
 end
 
@@ -99,8 +90,16 @@ local function updateInfo()
   percent = cube.getEnergyFilledPercentage()
 end
 
+local function updateOutput()
+  if percent < 50 then
+    redstone.setOutput(output, true)
+  elseif percent > 95 then
+    redstone.setOutput(output, false)
+  end
+end
+
 local function printInfo()
-  reset()
+  T.reset()
   local color = colors.yellow
   if percent > 66 then
     color = colors.green
@@ -109,31 +108,24 @@ local function printInfo()
   end
   local e = formatEnergy(energy)
   local m = formatEnergy(maxEnergy)
-  mon.write(rpad1('Energy') .. ": ")
-  mon.setTextColor(color)
-  mon.write(rpad2(e) .. "/" .. m)
-  newline()
+  T.write(rpad1('Energy') .. ": ")
+  T.setTextColor(color)
+  T.write(rpad2(e) .. "/" .. m)
+  T.newline()
 
   color = ternary(change > 0, colors.green, colors.red)
-  mon.write(rpad1('Yield') .. ": ")
-  mon.setTextColor(color)
-  mon.write(rpad2(round(change, 3)) .. " FE/t")
-  newline()
+  T.write(rpad1('Yield') .. ": ")
+  T.setTextColor(color)
+  T.write(rpad2(round(change, 3)) .. " FE/t")
+  T.newline()
 end
 
 sleep(1)
 print(maxEnergy)
 while true do
   updateInfo()
-  for _, cmon in pairs(monitors) do
-    mon = cmon
-    printInfo()
-  end
+  updateOutput()
+  printInfo()
   --print(percent)
-  if percent < 50 then
-    redstone.setOutput(output, true)
-  elseif percent > 95 then
-    redstone.setOutput(output, false)
-  end
-  sleep(R)
+  sleep(delay)
 end
