@@ -1,4 +1,4 @@
-local U = require "monitor"
+local M = require "monitor"
 --
 local delay = 1
 local w1 = 6
@@ -8,23 +8,19 @@ local toFE = mekanismEnergyHelper.joulesToFE
 local output = 'left'
 local cube = peripheral.find("inductionPort")
 local monitors = { peripheral.find("monitor") }
+local T = M.create(monitors)
 --
-local T = U.create(monitors)
-local percent = 0
-local energy = 0
-local change = 0
-local maxEnergy = toFE(cube.getMaxEnergy())
+local state = {
+  percent = 0,
+  energy = 0,
+  change = 0,
+  maxEnergy = 100
+}
 --
 
-local function rpad1(s)
+local function rpad(s, w)
   s = tostring(s)
-  local pad = w1 - #s
-  return string.rep(" ", pad) .. s
-end
-
-local function rpad2(s)
-  s = tostring(s)
-  local pad = w2 - #s
+  local pad = w - #s
   return string.rep(" ", pad) .. s
 end
 
@@ -54,75 +50,58 @@ local function formatEnergy(n)
   end
 end
 
--- Modifyed print
-local function printnocolor(name, value, unit)
-  T.write(rpad1(name) .. ": " .. rpad2(tostring(round(value, 3))) .. " " .. unit)
-  newline()
-end
-
-local function printcolor(name, value, maxvalue, unit)
-  T.write(rpad1(name) .. ": ")
-  local percent = math.floor(value / math.abs(maxvalue) * 100)
-  if maxvalue > 0 then
-    if percent > 66 then
-      T.setTextColor(colors.green)
-    elseif percent < 34 then
-      T.setTextColor(colors.red)
-    else
-      T.setTextColor(colors.yellow)
-    end
-  else
-    if percent > 66 then
-      T.setTextColor(colors.red)
-    elseif percent < 34 then
-      T.setTextColor(colors.green)
-    else
-      T.setTextColor(colors.yellow)
-    end
-  end
-  T.write(rpad2(tostring(round(value, 3))) .. " " .. unit)
-  newline()
-end
-
 local function updateInfo()
-  energy = toFE(cube.getEnergy())
-  change = toFE(cube.getLastInput() - cube.getLastOutput())
-  percent = cube.getEnergyFilledPercentage()
+  state.maxEnergy = toFE(cube.getMaxEnergy())
+  state.energy = toFE(cube.getEnergy())
+  state.change = toFE(cube.getLastInput()) - toFE(cube.getLastOutput())
+  state.percent = cube.getEnergyFilledPercentage() * 100
 end
 
 local function updateOutput()
-  if percent < 50 then
+  if state.percent < 50 then
     redstone.setOutput(output, true)
-  elseif percent > 95 then
+  elseif state.percent > 95 then
     redstone.setOutput(output, false)
   end
 end
 
 local function printInfo()
+  local t = term.redirect(T)
+  local W = term.getSize()
   T.reset()
+  --
   local color = colors.yellow
-  if percent > 66 then
+  if state.percent > 66 then
     color = colors.green
-  elseif percent < 34 then
+  elseif state.percent < 34 then
     color = colors.red
   end
-  local e = formatEnergy(energy)
-  local m = formatEnergy(maxEnergy)
-  T.write(rpad1('Energy') .. ": ")
+  local e = formatEnergy(state.energy)
+  local m = formatEnergy(state.maxEnergy)
+  T.write(rpad('Energy', w1) .. ": ")
   T.setTextColor(color)
-  T.write(rpad2(e) .. "/" .. m)
+  T.write(rpad(e, w2) .. "/" .. m)
   T.newline()
+  --
+  local colorY = ternary(state.change > 0, colors.green, colors.red)
+  T.write(rpad('Yield', w1) .. ": ")
+  T.setTextColor(colorY)
+  T.write(rpad(round(state.change, 3), w2) .. " FE/t")
+  T.newline()
+  --
 
-  color = ternary(change > 0, colors.green, colors.red)
-  T.write(rpad1('Yield') .. ": ")
-  T.setTextColor(color)
-  T.write(rpad2(round(change, 3)) .. " FE/t")
-  T.newline()
+  term.setBackgroundColor(colors.black)
+  paintutils.drawBox(1, 3, W, 5, colors.gray)
+  paintutils.drawBox(2, 4, (W - 1) / 100 * state.percent, 4, color)
+  --
+  term.redirect(t)
 end
 
-sleep(1)
-print(maxEnergy)
+sleep(5)
+state.maxEnergy = toFE(cube.getMaxEnergy())
+print(state.maxEnergy)
 while true do
+  --print(toFE(cube.getLastInput()) - toFE(cube.getLastOutput()))
   updateInfo()
   updateOutput()
   printInfo()
