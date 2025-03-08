@@ -10,8 +10,8 @@ local remove = false
 
 function fillTurtles()
    turtles[1] = 2
---   turtles[2] = 114
---   turtles[3] = 117
+   --   turtles[2] = 114
+   --   turtles[3] = 117
 end
 
 function fillTable()
@@ -25,58 +25,58 @@ function fillTable()
    local currName = 0
    local npp = 12 --names per page
    for turt, data in pairs(names) do
-      for i,j in pairs(data) do
-         totalrows = totalrows+1
+      for i, j in pairs(data) do
+         totalrows = totalrows + 1
       end
    end
-   pages = math.ceil(totalrows/npp)
+   pages = math.ceil(totalrows / npp)
    print(totalrows)
    for turt, data in pairs(names) do
       currName = 0
       for slot, name in pairs(data) do
-       currName = currName + 1
-       if currName > npp*(page-1) and currName < npp*page+1 then
-         row = 4+(countRow)
-         names[turt][slot] = string.sub(name, 0, 17)
-         button.setTable(string.sub(name, 0, 17), runStuff, turt..":"..slot, col, col+17 , row, row)
-         if col == 21 then 
-           col = 2 
-           countRow = countRow + 2
-         else 
-           col = col+19 
+         currName = currName + 1
+         if currName > npp * (page - 1) and currName < npp * page + 1 then
+            row = 4 + (countRow)
+            names[turt][slot] = string.sub(name, 0, 17)
+            button.setTable(string.sub(name, 0, 17), runStuff, turt .. ":" .. slot, col, col + 17, row, row)
+            if col == 21 then
+               col = 2
+               countRow = countRow + 2
+            else
+               col = col + 19
+            end
          end
-       end
       end
    end
    button.setTable("Next Page", nextPage, "", 21, 38, 1, 1)
    button.setTable("Prev Page", prevPage, "", 2, 19, 1, 1)
    button.setTable("Refresh", checkNames, "", 21, 38, 19, 19)
    button.setTable("Remove Book", removeIt, "", 2, 19, 19, 19)
-   button.label(15,3, "Page: "..tostring(page).." of "..tostring(pages))
+   button.label(15, 3, "Page: " .. tostring(page) .. " of " .. tostring(pages))
    button.screen()
-end      
+end
 
 function nextPage()
-   if page+1 <= pages then 
-      page = page+1 
+   if page + 1 <= pages then
+      page = page + 1
    end
    fillTable()
    sleep(0.25)
 end
 
 function prevPage()
-   if page-1 >= 1 then page = page-1 end
+   if page - 1 >= 1 then page = page - 1 end
    fillTable()
    sleep(0.25)
-end   
-                           
+end
+
 function getNames()
    names = {}
    for x, y in pairs(turtles) do
       names[y] = {}
       rednet.send(y, "getNames")
       local id, msg, dist = rednet.receive(2)
---      print(msg)
+      --      print(msg)
       names[y] = textutils.unserialize(msg)
    end
 end
@@ -84,7 +84,7 @@ end
 function removeIt()
    remove = not remove
    rs.setOutput("bottom", remove)
---   print(remove)
+   --   print(remove)
    button.toggleButton("Remove Book")
    if not remove then checkNames() end
 end
@@ -94,28 +94,28 @@ function runStuff(info)
       --removeBook(info)
    else
       openPortal(info)
-   end      
+   end
 end
 
 function removeBook()
    local turt, slot = string.match(info, "(%d+):(%d+)")
    button.toggleButton(names[tonumber(turt)][tonumber(slot)])
-   data = "remove"..tostring(slot)
+   data = "remove" .. tostring(slot)
    rednet.send(tonumber(turt), data)
    rednet.receive()
    button.toggleButton(names[tonumber(turt)][tonumber(slot)])
-   remove=false
+   remove = false
    button.toggleButton("Remove Book")
---   sleep(1)
+   --   sleep(1)
    checkNames()
-end   
+end
 
 function openPortal(info)
-   local turt,slot = string.match(info, "(%d+):(%d+)")
---   print(names[tonumber(turt)][tonumber(slot)])
+   local turt, slot = string.match(info, "(%d+):(%d+)")
+   --   print(names[tonumber(turt)][tonumber(slot)])
    button.toggleButton(names[tonumber(turt)][tonumber(slot)])
    print(names[tonumber(turt)][tonumber(slot)])
-   data = "books"..tostring(slot)
+   data = "books" .. tostring(slot)
    rednet.send(tonumber(turt), data)
    rednet.receive()
    button.toggleButton(names[tonumber(turt)][tonumber(slot)])
@@ -124,39 +124,39 @@ end
 function checkNames()
    button.flash("Refresh")
    for num, turt in pairs(turtles) do
-     rednet.send(turt, "checkSlots")
-     msg = ""
-     while msg ~= "done" do
-       id, msg, dist = rednet.receive()
-       if msg == "getName" then
-          m.clear()
-          m.setCursorPos(5, 12)
-          m.write("New book detected.")
-          m.setCursorPos(5, 14)
-          m.write("Please enter the name")
-          m.setCursorPos(5, 16)
-          m.write("On the computer")
-          m.setCursorPos(5, 18)
-          m.write("<<----")
-          term.clear()
-          term.write("Please enter a name for the new book: ")
-          name = read()
-          rednet.send(id, name)
-       end
-     end
+      rednet.send(turt, "checkSlots")
+      msg = ""
+      while msg ~= "done" do
+         id, msg, dist = rednet.receive()
+         if msg == "getName" then
+            m.clear()
+            m.setCursorPos(5, 12)
+            m.write("New book detected.")
+            m.setCursorPos(5, 14)
+            m.write("Please enter the name")
+            m.setCursorPos(5, 16)
+            m.write("On the computer")
+            m.setCursorPos(5, 18)
+            m.write("<<----")
+            term.clear()
+            term.write("Please enter a name for the new book: ")
+            name = read()
+            rednet.send(id, name)
+         end
+      end
    end
    getNames()
    fillTable()
 end
 
 function getClick()
-   event, side, x,y = os.pullEvent()
+   event, side, x, y = os.pullEvent()
    if event == "monitor_touch" then
-      button.checkxy(x,y)
-   --[[elseif event == "redstone" then
+      button.checkxy(x, y)
+      --[[elseif event == "redstone" then
       print("redstone")
       sleep(5)
-      checkNames()]]      
+      checkNames()]]
    end
 end
 
@@ -167,5 +167,5 @@ checkNames()
 
 while true do
    getClick()
---   checkNames()
+   --   checkNames()
 end

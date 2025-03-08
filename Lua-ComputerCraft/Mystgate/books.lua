@@ -3,7 +3,7 @@ rednet.open("left")
 p = peripheral.wrap("bottom")
 
 function clearInv()
-   for i = 1,16 do
+   for i = 1, 16 do
       turtle.select(i)
       turtle.dropDown()
    end
@@ -14,14 +14,14 @@ function checkSlots(id)
    local slot
    local name
    local slots = p.getAllStacks()
-   for i,j in pairs(slots) do
+   for i, j in pairs(slots) do
       slot = i
       myst_book = j.single("myst_book")
       name = myst_book["destination"]
       print(name)
-      data[slot]=name
+      data[slot] = name
    end
-   rednet.send(id,"done")
+   rednet.send(id, "done")
 end
 
 function removeSlot(slot)
@@ -31,7 +31,7 @@ function removeSlot(slot)
    rs.setOutput("left", false)
 end
 
-function book(slot,id)
+function book(slot, id)
    p.pushItem("up", slot, 1)
    turtle.select(1)
    turtle.drop()
@@ -56,16 +56,16 @@ clearInv()
 while true do
    local id, msg, dis = rednet.receive()
    local newmsg = string.match(msg, "%a+")
---   print(msg)
+   --   print(msg)
    if newmsg == "checkSlots" then
-     checkSlots(id) 
+      checkSlots(id)
    elseif newmsg == "getNames" then
-     getNames(id)
+      getNames(id)
    elseif newmsg == "remove" then
-     removeSlot(tonumber(string.match(msg, "%d+")))
-     rednet.send(id,"done")
+      removeSlot(tonumber(string.match(msg, "%d+")))
+      rednet.send(id, "done")
    elseif newmsg == "books" then
-     slot = string.match(msg, "%d+")
-     book(tonumber(slot), id)
+      slot = string.match(msg, "%d+")
+      book(tonumber(slot), id)
    end
 end
