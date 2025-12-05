@@ -32,6 +32,9 @@ SELECT 'public '+NType +' '+[Name]+'{
 	}
 }'
 FROM [stn].[UF_GetUPOutput]('Procedure')
+-- Filter Property
+SELECT 'public ' + [NType] + ' '+ [Name] +' {get; set;}'
+FROM [stn].[UF_GetUPInput]('Procedure')
 -- Row to Property
 SELECT [Name] + ' = R.Field<' + [NType]+'>("'+[Name]+'")'
 FROM [stn].[UF_GetUPOutput]('Procedure')
